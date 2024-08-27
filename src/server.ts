@@ -24,7 +24,12 @@ mongoose
   });
 
 // cors middleware
-app.use(cors({ credentials: true, origin: "http://localhost:3000" }));
+app.use(
+  cors({
+    credentials: true,
+    origin: "https://construction-site-frontend.onrender.com",
+  })
+);
 
 // middleware for parsing json data
 app.use(express.json());
