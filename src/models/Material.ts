@@ -46,7 +46,22 @@ const materialSchema: Schema<IMaterial> = new Schema(
     milestone: {
       type: String,
       required: true,
-      enum: ["Foundations", "Slab", "Walling", "Rinto", "Roofing"], // List of possible milestones
+      enum: [
+        "Foundations",
+        "Slab",
+        "Walling",
+        "Rinto",
+        "Roofing",
+        "Plumbing",
+        "Electrical works",
+        "Roofing",
+        "Ceiling",
+        "Pluster",
+        "Tiling",
+        "Fittings",
+        "Doors",
+        "Windows",
+      ], // List of possible milestones
     },
     history: [
       {
