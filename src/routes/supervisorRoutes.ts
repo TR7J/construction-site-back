@@ -3,18 +3,12 @@ import {
   addLabour,
   addOrUpdateMaterial,
   addWorker,
-  createPayment,
   deleteLabour,
   deleteMaterial,
-  getAllMaterialIssuances,
   getLabourById,
   getLabours,
   getMaterialById,
   getMaterials,
-  getRemainingMaterials,
-  getWorkerMaterialIssuances,
-  issueMaterials,
-  recordRemainingMaterials,
   updateLabourById,
   updateMaterial,
 } from "../controllers/supervisorController";
@@ -26,43 +20,24 @@ const router = express.Router();
 router.post("/material", AuthMiddleware, addOrUpdateMaterial);
 // Worker management routes
 router.post("/workers", AuthMiddleware, addWorker);
-// Issue materials route
-router.post("/issue-materials/:round", AuthMiddleware, issueMaterials);
+
 // Get all materials
 router.get("/materials", AuthMiddleware, getMaterials);
 // Get a material by ID
-router.get("/material/:id", getMaterialById);
+router.get("/material/:id", AuthMiddleware, getMaterialById);
 // Edit a material
-router.put("/material/:id", updateMaterial);
+router.put("/material/:id", AuthMiddleware, updateMaterial);
 // Delete a material
-router.delete("/material/:id", deleteMaterial);
+router.delete("/material/:id", AuthMiddleware, deleteMaterial);
 // Post Labour
-router.post("/labour", addLabour);
+router.post("/labour", AuthMiddleware, addLabour);
 // Get Labours
-router.get("/labours", getLabours);
+router.get("/labours", AuthMiddleware, getLabours);
 // Get Labour by id
-router.get("/labour/:id", getLabourById);
+router.get("/labour/:id", AuthMiddleware, getLabourById);
 // Update Labours by id
-router.put("/labour/:id", updateLabourById);
+router.put("/labour/:id", AuthMiddleware, updateLabourById);
 // Delete Labours by id
-router.delete("/labour/:id", deleteLabour);
-
-// Get issued materials for a worker
-router.get(
-  "/issued-materials/:workerId",
-  AuthMiddleware,
-  getWorkerMaterialIssuances
-);
-
-// Get all issued materials
-router.get("/issued-materials", AuthMiddleware, getAllMaterialIssuances);
-// pay workers based on attendance
-router.post("/payments", AuthMiddleware, createPayment);
-
-// Record remaining materials
-router.post("/remaining-materials", AuthMiddleware, recordRemainingMaterials);
-
-// Get remaining materials
-router.get("/remaining-materials", AuthMiddleware, getRemainingMaterials);
+router.delete("/labour/:id", AuthMiddleware, deleteLabour);
 
 export default router;

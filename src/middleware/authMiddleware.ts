@@ -15,6 +15,7 @@ export const AuthMiddleware = (
       name: string;
       email: string;
       isAdmin: boolean;
+      tenantId: string;
       token: string;
     };
     next();

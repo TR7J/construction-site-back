@@ -10,6 +10,7 @@ export const generateToken = (user: IUser) => {
       name: user.name,
       email: user.email,
       isAdmin: user.isAdmin,
+      tenantId: user.tenantId,
     },
     process.env.TOKENSECRET as string,
     {
@@ -28,6 +29,7 @@ export const isAuth = (req: Request, res: Response, next: NextFunction) => {
       name: string;
       email: string;
       isAdmin: boolean;
+      tenantId: string;
       token: string;
     };
     next();

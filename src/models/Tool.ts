@@ -4,6 +4,7 @@ export interface ITool extends Document {
   name: string;
   description?: string;
   quantity: number;
+  tenantId: mongoose.Schema.Types.ObjectId;
 }
 
 const toolSchema: Schema<ITool> = new Schema(
@@ -20,6 +21,11 @@ const toolSchema: Schema<ITool> = new Schema(
       type: Number,
       required: true,
       default: 0,
+    },
+    tenantId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Tenant",
+      required: true,
     },
   },
   {

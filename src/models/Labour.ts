@@ -25,6 +25,7 @@ export interface ILabour extends Document {
   totalFundisPay: number;
   totalHelpersPay: number;
   totalPay: number;
+  tenantId: mongoose.Schema.Types.ObjectId;
 }
 
 const LabourSchema: Schema = new Schema({
@@ -50,6 +51,11 @@ const LabourSchema: Schema = new Schema({
   totalFundisPay: { type: Number, required: true },
   totalHelpersPay: { type: Number, required: true },
   totalPay: { type: Number, required: true },
+  tenantId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Tenant",
+    required: true,
+  },
 });
 
 export default mongoose.model<ILabour>("Labour", LabourSchema);

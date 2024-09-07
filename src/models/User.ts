@@ -6,6 +6,7 @@ export interface IUser extends Document {
   password: string;
   isAdmin: boolean;
   role: "admin" | "supervisor" | "worker";
+  tenantId: mongoose.Schema.Types.ObjectId;
 }
 
 // Creating the user schema
@@ -31,6 +32,11 @@ const userSchema = new Schema<IUser>(
     },
     role: {
       type: String,
+      required: true,
+    },
+    tenantId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Tenant",
       required: true,
     },
   },

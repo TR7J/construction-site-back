@@ -3,6 +3,7 @@ import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import User from "../models/User";
 import { generateToken } from "../utils/generateToken";
+import Tenant from "../models/Tenant";
 
 // Sign in controller
 export const signinUser = async (
@@ -17,6 +18,7 @@ export const signinUser = async (
         name: user.name,
         email: user.email,
         isAdmin: user.isAdmin,
+        tenantId: user.tenantId, // Include tenantId
         token: generateToken(user),
       });
     } else {
@@ -27,14 +29,13 @@ export const signinUser = async (
   }
 };
 
-// signupuser controller
+// Signup user controller
 export const signupUser = async (
   req: Request,
   res: Response
 ): Promise<void> => {
   try {
     const { name, email, password, role } = req.body;
-    console.log("Request body:", req.body);
 
     // Check if the email already exists
     const existingUser = await User.findOne({ email });
@@ -43,21 +44,29 @@ export const signupUser = async (
       return;
     }
 
+    // Check if the tenant already exists
+    let tenant = await Tenant.findOne({ name: name });
+    if (!tenant) {
+      // Create a new tenant if it does not exist
+      tenant = new Tenant({ name: name });
+      await tenant.save();
+    }
+
     // Determine if the user is an admin based on the role
     const isAdmin = role === "admin";
 
     // Hash the password
     const hashedPassword = bcrypt.hashSync(password, 10);
 
+    // Create the user with the tenant ID
     const user = await User.create({
       name,
       email,
       password: hashedPassword,
       role,
       isAdmin,
+      tenantId: tenant._id, // Associate user with tenant ID
     });
-
-    console.log("User created:", user);
 
     // Generate token
     const token = generateToken(user);
@@ -68,14 +77,65 @@ export const signupUser = async (
       email: user.email,
       role: user.role,
       isAdmin: user.isAdmin,
+      tenantId: user.tenantId,
       token,
     });
   } catch (error: any) {
-    /*  res.status(500).json({ message: "Server error" }); */
     console.error("Error creating user:", error.message, error);
     res
       .status(500)
       .json({ message: "User creation failed", error: error.message });
+  }
+};
+
+// Controller to create a supervisor
+export const createSupervisor = async (req: Request, res: Response) => {
+  try {
+    const adminId = req.user?._id; // Admin ID from the authenticated user
+    const { name, email, password, role } = req.body; // Supervisor details
+
+    if (!adminId) {
+      return res.status(401).json({ message: "Admin not authenticated" });
+    }
+
+    // Find the admin to get their tenantId
+    const admin = await User.findById(adminId);
+    if (!admin || !admin.isAdmin) {
+      return res
+        .status(403)
+        .json({ message: "Not authorized to create supervisor" });
+    }
+
+    // Determine if the user is an admin based on the role
+    const isAdmin = role === "admin";
+
+    // Hash the password
+    const hashedPassword = bcrypt.hashSync(password, 10);
+
+    // Create the user with the tenant ID
+    const user = await User.create({
+      name,
+      email,
+      password: hashedPassword,
+      role,
+      isAdmin,
+      tenantId: admin.tenantId, // Associate user with tenant ID
+    });
+
+    // Generate token
+    const token = generateToken(user);
+
+    res.status(201).json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      isAdmin: user.isAdmin,
+      tenantId: user.tenantId,
+      token,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Error creating supervisor", error });
   }
 };
 
@@ -98,6 +158,7 @@ export const updateUserProfile = async (
         name: updatedUser.name,
         email: updatedUser.email,
         isAdmin: updatedUser.isAdmin,
+        tenantId: updatedUser.tenantId,
         token: generateToken(updatedUser),
       });
     } else {
@@ -109,7 +170,6 @@ export const updateUserProfile = async (
 };
 
 // get users - admin
-
 export const getUsers = async (req: Request, res: Response) => {
   try {
     const users = await User.find({});

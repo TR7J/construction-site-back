@@ -1,29 +1,25 @@
 import { Request, Response } from "express";
-import MaterialType from "../models/MaterialType";
 import Tool from "../models/Tool";
 import User from "../models/User";
 import Material from "../models/Material";
 
 export const addOrUpdateMaterial = async (req: Request, res: Response) => {
   try {
+    const { tenantId } = req.user;
     let { name, quantity, unitPrice, unitType, milestone } = req.body;
 
-    // Ensure quantity and unitPrice are treated as numbers
     quantity = Number(quantity);
     unitPrice = Number(unitPrice);
     const totalPrice = quantity * unitPrice;
 
-    // Check if the material already exists by name
-    let material = await Material.findOne({ name });
+    let material = await Material.findOne({ name, tenantId });
 
     if (material) {
-      // Update existing material
       material.quantity += quantity;
       material.unitPrice = unitPrice;
-      material.totalPrice = material.quantity * material.unitPrice; // Recalculate total price
+      material.totalPrice = material.quantity * material.unitPrice;
       material.unitType = unitType;
 
-      // Add to history
       material.history.push({
         date: new Date(),
         name: material.name,
@@ -37,7 +33,6 @@ export const addOrUpdateMaterial = async (req: Request, res: Response) => {
       const updatedMaterial = await material.save();
       res.json(updatedMaterial);
     } else {
-      // Create new material
       const newMaterial = new Material({
         name,
         quantity,
@@ -45,6 +40,7 @@ export const addOrUpdateMaterial = async (req: Request, res: Response) => {
         totalPrice,
         unitType,
         milestone,
+        tenantId, // Associate with the tenant
         history: [
           {
             date: new Date(),
@@ -64,10 +60,12 @@ export const addOrUpdateMaterial = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Error processing material", error });
   }
 };
-// Get all materials
+
+// Get all materials for the tenant
 export const getMaterials = async (req: Request, res: Response) => {
   try {
-    const materials = await Material.find();
+    const { tenantId } = req.user;
+    const materials = await Material.find({ tenantId });
     res.json(materials);
   } catch (error) {
     res.status(500).json({ message: "Failed to retrieve materials", error });
@@ -104,10 +102,11 @@ export const getTools = async (req: Request, res: Response) => {
   }
 };
 
-// Get all workers added by the supervisor
+// Get all workers for the tenant
 export const getWorkers = async (req: Request, res: Response) => {
   try {
-    const workers = await User.find({ role: "supervisor" });
+    const { tenantId } = req.user;
+    const workers = await User.find({ role: "worker", tenantId });
     res.json(workers);
   } catch (error) {
     res.status(500).json({ message: "Error fetching workers", error });

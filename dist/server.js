@@ -25,7 +25,10 @@ mongoose_1.default
     console.log("Error while connecting to database.");
 });
 // cors middleware
-app.use((0, cors_1.default)({ credentials: true, origin: "http://localhost:3000" }));
+app.use((0, cors_1.default)({
+    credentials: true,
+    origin: "https://construction-site-frontend.onrender.com",
+}));
 // middleware for parsing json data
 app.use(express_1.default.json());
 // middleware for our routes
