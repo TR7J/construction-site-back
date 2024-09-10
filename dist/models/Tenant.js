@@ -24,25 +24,8 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
-const paymentSchema = new mongoose_1.Schema({
-    workerId: {
-        type: mongoose_1.Schema.Types.ObjectId,
-        ref: "User",
-        required: true,
-    },
-    amount: {
-        type: Number,
-        required: true,
-    },
-    date: {
-        type: Date,
-        required: true,
-    },
-    description: {
-        type: String,
-    },
-}, {
-    timestamps: true,
+const tenantSchema = new mongoose_1.Schema({
+    name: { type: String, required: true },
 });
-const Payment = mongoose_1.default.model("Payment", paymentSchema);
-exports.default = Payment;
+const Tenant = mongoose_1.default.model("Tenant", tenantSchema);
+exports.default = Tenant;

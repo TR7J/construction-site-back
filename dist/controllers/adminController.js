@@ -18,20 +18,17 @@ const User_1 = __importDefault(require("../models/User"));
 const Material_1 = __importDefault(require("../models/Material"));
 const addOrUpdateMaterial = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
+        const { tenantId } = req.user;
         let { name, quantity, unitPrice, unitType, milestone } = req.body;
-        // Ensure quantity and unitPrice are treated as numbers
         quantity = Number(quantity);
         unitPrice = Number(unitPrice);
         const totalPrice = quantity * unitPrice;
-        // Check if the material already exists by name
-        let material = yield Material_1.default.findOne({ name });
+        let material = yield Material_1.default.findOne({ name, tenantId });
         if (material) {
-            // Update existing material
             material.quantity += quantity;
             material.unitPrice = unitPrice;
-            material.totalPrice = material.quantity * material.unitPrice; // Recalculate total price
+            material.totalPrice = material.quantity * material.unitPrice;
             material.unitType = unitType;
-            // Add to history
             material.history.push({
                 date: new Date(),
                 name: material.name,
@@ -45,7 +42,6 @@ const addOrUpdateMaterial = (req, res) => __awaiter(void 0, void 0, void 0, func
             res.json(updatedMaterial);
         }
         else {
-            // Create new material
             const newMaterial = new Material_1.default({
                 name,
                 quantity,
@@ -53,6 +49,7 @@ const addOrUpdateMaterial = (req, res) => __awaiter(void 0, void 0, void 0, func
                 totalPrice,
                 unitType,
                 milestone,
+                tenantId, // Associate with the tenant
                 history: [
                     {
                         date: new Date(),
@@ -74,10 +71,11 @@ const addOrUpdateMaterial = (req, res) => __awaiter(void 0, void 0, void 0, func
     }
 });
 exports.addOrUpdateMaterial = addOrUpdateMaterial;
-// Get all materials
+// Get all materials for the tenant
 const getMaterials = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const materials = yield Material_1.default.find();
+        const { tenantId } = req.user;
+        const materials = yield Material_1.default.find({ tenantId });
         res.json(materials);
     }
     catch (error) {
@@ -114,10 +112,11 @@ const getTools = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.getTools = getTools;
-// Get all workers added by the supervisor
+// Get all workers for the tenant
 const getWorkers = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const workers = yield User_1.default.find({ role: "supervisor" });
+        const { tenantId } = req.user;
+        const workers = yield User_1.default.find({ role: "worker", tenantId });
         res.json(workers);
     }
     catch (error) {

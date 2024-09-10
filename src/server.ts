@@ -28,6 +28,7 @@ app.use(
   cors({
     credentials: true,
     origin: "https://construction-site-frontend.onrender.com",
+    // http://localhost:3000
   })
 );
 

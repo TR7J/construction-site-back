@@ -12,10 +12,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getCurrentUser = exports.deleteUser = exports.updateUser = exports.getUserById = exports.getUsers = exports.updateUserProfile = exports.signupUser = exports.signinUser = void 0;
+exports.getCurrentUser = exports.deleteUser = exports.updateUser = exports.getUserById = exports.getUsers = exports.updateUserProfile = exports.createSupervisor = exports.signupUser = exports.signinUser = void 0;
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const User_1 = __importDefault(require("../models/User"));
 const generateToken_1 = require("../utils/generateToken");
+const Tenant_1 = __importDefault(require("../models/Tenant"));
 // Sign in controller
 const signinUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -26,6 +27,7 @@ const signinUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                 name: user.name,
                 email: user.email,
                 isAdmin: user.isAdmin,
+                tenantId: user.tenantId, // Include tenantId
                 token: (0, generateToken_1.generateToken)(user),
             });
         }
@@ -38,29 +40,36 @@ const signinUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     }
 });
 exports.signinUser = signinUser;
-// signupuser controller
+// Signup user controller
 const signupUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { name, email, password, role } = req.body;
-        console.log("Request body:", req.body);
         // Check if the email already exists
         const existingUser = yield User_1.default.findOne({ email });
         if (existingUser) {
             res.status(400).json({ message: "Email already registered" });
             return;
         }
+        // Check if the tenant already exists
+        let tenant = yield Tenant_1.default.findOne({ name: name });
+        if (!tenant) {
+            // Create a new tenant if it does not exist
+            tenant = new Tenant_1.default({ name: name });
+            yield tenant.save();
+        }
         // Determine if the user is an admin based on the role
         const isAdmin = role === "admin";
         // Hash the password
         const hashedPassword = bcryptjs_1.default.hashSync(password, 10);
+        // Create the user with the tenant ID
         const user = yield User_1.default.create({
             name,
             email,
             password: hashedPassword,
             role,
             isAdmin,
+            tenantId: tenant._id, // Associate user with tenant ID
         });
-        console.log("User created:", user);
         // Generate token
         const token = (0, generateToken_1.generateToken)(user);
         res.json({
@@ -69,11 +78,11 @@ const signupUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             email: user.email,
             role: user.role,
             isAdmin: user.isAdmin,
+            tenantId: user.tenantId,
             token,
         });
     }
     catch (error) {
-        /*  res.status(500).json({ message: "Server error" }); */
         console.error("Error creating user:", error.message, error);
         res
             .status(500)
@@ -81,6 +90,52 @@ const signupUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     }
 });
 exports.signupUser = signupUser;
+// Controller to create a supervisor
+const createSupervisor = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    try {
+        const adminId = (_a = req.user) === null || _a === void 0 ? void 0 : _a._id; // Admin ID from the authenticated user
+        const { name, email, password, role } = req.body; // Supervisor details
+        if (!adminId) {
+            return res.status(401).json({ message: "Admin not authenticated" });
+        }
+        // Find the admin to get their tenantId
+        const admin = yield User_1.default.findById(adminId);
+        if (!admin || !admin.isAdmin) {
+            return res
+                .status(403)
+                .json({ message: "Not authorized to create supervisor" });
+        }
+        // Determine if the user is an admin based on the role
+        const isAdmin = role === "admin";
+        // Hash the password
+        const hashedPassword = bcryptjs_1.default.hashSync(password, 10);
+        // Create the user with the tenant ID
+        const user = yield User_1.default.create({
+            name,
+            email,
+            password: hashedPassword,
+            role,
+            isAdmin,
+            tenantId: admin.tenantId, // Associate user with tenant ID
+        });
+        // Generate token
+        const token = (0, generateToken_1.generateToken)(user);
+        res.status(201).json({
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            isAdmin: user.isAdmin,
+            tenantId: user.tenantId,
+            token,
+        });
+    }
+    catch (error) {
+        res.status(500).json({ message: "Error creating supervisor", error });
+    }
+});
+exports.createSupervisor = createSupervisor;
 // Update profile controller
 const updateUserProfile = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -97,6 +152,7 @@ const updateUserProfile = (req, res) => __awaiter(void 0, void 0, void 0, functi
                 name: updatedUser.name,
                 email: updatedUser.email,
                 isAdmin: updatedUser.isAdmin,
+                tenantId: updatedUser.tenantId,
                 token: (0, generateToken_1.generateToken)(updatedUser),
             });
         }

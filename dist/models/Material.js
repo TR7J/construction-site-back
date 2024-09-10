@@ -51,22 +51,6 @@ const materialSchema = new mongoose_1.Schema({
     milestone: {
         type: String,
         required: true,
-        enum: [
-            "Foundations",
-            "Slab",
-            "Walling",
-            "Rinto",
-            "Roofing",
-            "Plumbing",
-            "Electrical works",
-            "Roofing",
-            "Ceiling",
-            "Pluster",
-            "Tiling",
-            "Fittings",
-            "Doors",
-            "Windows",
-        ], // List of possible milestones
     },
     history: [
         {
@@ -82,6 +66,11 @@ const materialSchema = new mongoose_1.Schema({
             milestone: String, // Added milestone to history
         },
     ],
+    tenantId: {
+        type: mongoose_1.default.Schema.Types.ObjectId,
+        ref: "Tenant",
+        required: true,
+    },
 }, {
     timestamps: true,
 });

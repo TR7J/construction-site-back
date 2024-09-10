@@ -11,6 +11,7 @@ const generateToken = (user) => {
         name: user.name,
         email: user.email,
         isAdmin: user.isAdmin,
+        tenantId: user.tenantId,
     }, process.env.TOKENSECRET, {
         expiresIn: "20d",
     });

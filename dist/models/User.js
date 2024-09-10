@@ -48,6 +48,11 @@ const userSchema = new mongoose_1.Schema({
         type: String,
         required: true,
     },
+    tenantId: {
+        type: mongoose_1.default.Schema.Types.ObjectId,
+        ref: "Tenant",
+        required: true,
+    },
 }, {
     timestamps: true,
 });

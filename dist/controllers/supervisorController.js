@@ -12,30 +12,23 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getWorkerAttendance = exports.getAllWorkers = exports.deleteWorker = exports.updateWorker = exports.markAttendance = exports.getRemainingMaterials = exports.recordRemainingMaterials = exports.createPayment = exports.getAllMaterialIssuances = exports.getWorkerMaterialIssuances = exports.issueMaterials = exports.addWorker = exports.deleteLabour = exports.updateLabourById = exports.getLabourById = exports.getLabours = exports.addLabour = exports.deleteMaterial = exports.updateMaterial = exports.getMaterialById = exports.getMaterials = exports.addOrUpdateMaterial = void 0;
+exports.getAllWorkers = exports.deleteWorker = exports.updateWorker = exports.addWorker = exports.deleteLabour = exports.updateLabourById = exports.getLabourById = exports.getLabours = exports.addLabour = exports.deleteMaterial = exports.updateMaterial = exports.getMaterialById = exports.getMaterials = exports.addOrUpdateMaterial = void 0;
 const Material_1 = __importDefault(require("../models/Material"));
 const User_1 = __importDefault(require("../models/User"));
 const Labour_1 = __importDefault(require("../models/Labour"));
-const Payment_1 = __importDefault(require("../models/Payment"));
-const Attendance_1 = __importDefault(require("../models/Attendance"));
-const MaterialIssuance_1 = __importDefault(require("../models/MaterialIssuance"));
-const RemainingMaterials_1 = __importDefault(require("../models/RemainingMaterials"));
 const addOrUpdateMaterial = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
+        const { tenantId } = req.user;
         let { name, quantity, unitPrice, unitType, milestone } = req.body;
-        // Ensure quantity and unitPrice are treated as numbers
         quantity = Number(quantity);
         unitPrice = Number(unitPrice);
         const totalPrice = quantity * unitPrice;
-        // Check if the material already exists by name
-        let material = yield Material_1.default.findOne({ name });
+        let material = yield Material_1.default.findOne({ name, tenantId });
         if (material) {
-            // Update existing material
             material.quantity += quantity;
             material.unitPrice = unitPrice;
-            material.totalPrice = material.quantity * material.unitPrice; // Recalculate total price
+            material.totalPrice = material.quantity * material.unitPrice;
             material.unitType = unitType;
-            // Add to history
             material.history.push({
                 date: new Date(),
                 name: material.name,
@@ -49,7 +42,6 @@ const addOrUpdateMaterial = (req, res) => __awaiter(void 0, void 0, void 0, func
             res.json(updatedMaterial);
         }
         else {
-            // Create new material
             const newMaterial = new Material_1.default({
                 name,
                 quantity,
@@ -57,6 +49,7 @@ const addOrUpdateMaterial = (req, res) => __awaiter(void 0, void 0, void 0, func
                 totalPrice,
                 unitType,
                 milestone,
+                tenantId, // Associate with the tenant
                 history: [
                     {
                         date: new Date(),
@@ -78,10 +71,11 @@ const addOrUpdateMaterial = (req, res) => __awaiter(void 0, void 0, void 0, func
     }
 });
 exports.addOrUpdateMaterial = addOrUpdateMaterial;
-// Get all materials
+// Get all materials for the tenant
 const getMaterials = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const materials = yield Material_1.default.find();
+        const { tenantId } = req.user;
+        const materials = yield Material_1.default.find({ tenantId });
         res.json(materials);
     }
     catch (error) {
@@ -89,10 +83,15 @@ const getMaterials = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     }
 });
 exports.getMaterials = getMaterials;
-// Get a single material by ID
+// Get a single material by ID with tenant filtering
 const getMaterialById = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     try {
-        const material = yield Material_1.default.findById(req.params.id);
+        const tenantId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.tenantId; // Extract tenantId from the authenticated user
+        const material = yield Material_1.default.findOne({
+            _id: req.params.id,
+            tenantId, // Ensure the material belongs to the same tenant
+        });
         if (!material) {
             return res.status(404).json({ message: "Material not found" });
         }
@@ -106,10 +105,8 @@ exports.getMaterialById = getMaterialById;
 // Update material
 const updateMaterial = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const material = yield Material_1.default.findByIdAndUpdate(req.params.id, req.body, {
-            new: true,
-            runValidators: true,
-        });
+        const { tenantId } = req.user;
+        const material = yield Material_1.default.findOneAndUpdate({ _id: req.params.id, tenantId }, req.body, { new: true, runValidators: true });
         if (!material) {
             return res.status(404).json({ message: "Material not found" });
         }
@@ -120,43 +117,53 @@ const updateMaterial = (req, res) => __awaiter(void 0, void 0, void 0, function*
     }
 });
 exports.updateMaterial = updateMaterial;
-// Delete material
+// Delete material by ID with tenant-based access
 const deleteMaterial = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const { id } = req.params;
+    const tenantId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.tenantId;
     try {
-        const material = yield Material_1.default.findByIdAndDelete(req.params.id);
+        const material = yield Material_1.default.findOne({ _id: id, tenantId });
         if (!material) {
-            return res.status(404).json({ message: "Material not found" });
+            return res
+                .status(404)
+                .json({ message: "Material not found or not authorized" });
         }
-        res.json({ message: "Material deleted successfully" });
+        yield Material_1.default.findByIdAndDelete(id);
+        res.status(200).json({ message: "Material deleted successfully" });
     }
     catch (error) {
-        res.status(400).json({ message: error.message });
+        res
+            .status(500)
+            .json({ message: "Error deleting material", error: error.message });
     }
 });
 exports.deleteMaterial = deleteMaterial;
+// Add Labour
 const addLabour = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         if (!req.body.date || !req.body.milestone || !req.body.labourType) {
             return res.status(400).json({ message: "Missing required fields" });
         }
-        const newLabour = new Labour_1.default(req.body);
+        const { tenantId } = req.user;
+        const newLabour = new Labour_1.default(Object.assign(Object.assign({}, req.body), { tenantId }));
         yield newLabour.save();
         res
             .status(201)
             .json({ message: "Labour added successfully", labour: newLabour });
     }
     catch (error) {
-        console.error(error);
         res
             .status(500)
             .json({ message: "Failed to add labour", error: error.message });
     }
 });
 exports.addLabour = addLabour;
-// Get Labours
+// Get all labours for the tenant
 const getLabours = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const labours = yield Labour_1.default.find();
+        const { tenantId } = req.user;
+        const labours = yield Labour_1.default.find({ tenantId });
         res.status(200).json(labours);
     }
     catch (error) {
@@ -166,10 +173,15 @@ const getLabours = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     }
 });
 exports.getLabours = getLabours;
-// Get labour by ID
+// Get labour by ID with tenant filtering
 const getLabourById = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     try {
-        const labour = yield Labour_1.default.findById(req.params.id);
+        const tenantId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.tenantId; // Extract tenantId from the authenticated user
+        const labour = yield Labour_1.default.findOne({
+            _id: req.params.id,
+            tenantId, // Ensure the labour entry belongs to the same tenant
+        });
         if (!labour) {
             return res.status(404).json({ message: "Labour not found" });
         }
@@ -180,13 +192,11 @@ const getLabourById = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
 });
 exports.getLabourById = getLabourById;
-// Update labour by ID
+/// Update labour by ID
 const updateLabourById = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const labour = yield Labour_1.default.findByIdAndUpdate(req.params.id, req.body, {
-            new: true,
-            runValidators: true,
-        });
+        const { tenantId } = req.user;
+        const labour = yield Labour_1.default.findOneAndUpdate({ _id: req.params.id, tenantId }, req.body, { new: true, runValidators: true });
         if (!labour) {
             return res.status(404).json({ message: "Labour not found" });
         }
@@ -197,32 +207,39 @@ const updateLabourById = (req, res) => __awaiter(void 0, void 0, void 0, functio
     }
 });
 exports.updateLabourById = updateLabourById;
-// Delete a labour entry by ID
+// Delete a labour entry by ID with tenant-based access
 const deleteLabour = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     const { id } = req.params;
+    const tenantId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.tenantId; // Assuming req.user contains the tenant info
     try {
-        const labour = yield Labour_1.default.findByIdAndDelete(id);
+        const labour = yield Labour_1.default.findOne({ _id: id, tenantId });
         if (!labour) {
-            return res.status(404).json({ message: "Labour not found" });
+            return res
+                .status(404)
+                .json({ message: "Labour not found or not authorized" });
         }
+        yield Labour_1.default.findByIdAndDelete(id);
         res.status(200).json({ message: "Labour deleted successfully" });
     }
     catch (error) {
-        res.status(500).json({ message: "Server error" });
+        res
+            .status(500)
+            .json({ message: "Error deleting labour", error: error.message });
     }
 });
 exports.deleteLabour = deleteLabour;
-// Add a new worker
+// Add Worker
 const addWorker = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
+        const { tenantId } = req.user;
         const { name, mobile } = req.body;
-        // Create a new worker
         const worker = new User_1.default({
             name,
             mobile,
             role: "worker",
+            tenantId, // Associate with the tenant
         });
-        // Save the new worker
         const createdWorker = yield worker.save();
         res.status(201).json(createdWorker);
     }
@@ -231,182 +248,12 @@ const addWorker = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.addWorker = addWorker;
-// Issue materials to a worker
-const issueMaterials = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const { workerId, materialId, quantity } = req.body;
-        const { round } = req.params;
-        // Find the worker
-        const worker = yield User_1.default.findById(workerId);
-        if (!worker) {
-            return res.status(404).json({ message: "Worker not found" });
-        }
-        // Find the material
-        const material = yield Material_1.default.findById(materialId);
-        if (!material) {
-            return res.status(404).json({ message: "Material not found" });
-        }
-        // Check if sufficient quantity is available
-        if (material.quantity < quantity) {
-            return res
-                .status(400)
-                .json({ message: "Insufficient material quantity" });
-        }
-        // Update the material quantity
-        material.quantity -= quantity;
-        yield material.save();
-        // Record the issuance
-        const issuance = new MaterialIssuance_1.default({
-            workerId,
-            materialId,
-            quantity,
-            round,
-        });
-        const createdIssuance = yield issuance.save();
-        return res.status(201).json(createdIssuance);
-    }
-    catch (error) {
-        return res.status(500).json({ message: "Server error", error });
-    }
-});
-exports.issueMaterials = issueMaterials;
-// Get all issued materials for a specific worker
-const getWorkerMaterialIssuances = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const { workerId } = req.params;
-        // Find all issuances for the specific worker and populate related fields
-        const issuances = yield MaterialIssuance_1.default.find({ workerId })
-            .populate("materialId", "name")
-            .populate("workerId", "name");
-        return res.json(issuances);
-    }
-    catch (error) {
-        return res.status(500).json({ message: "Server error", error });
-    }
-});
-exports.getWorkerMaterialIssuances = getWorkerMaterialIssuances;
-// Get all issued materials
-const getAllMaterialIssuances = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        // Find all material issuances and populate related fields
-        const issuances = yield MaterialIssuance_1.default.find()
-            .populate("materialId", "name")
-            .populate("workerId", "name");
-        return res.json(issuances);
-    }
-    catch (error) {
-        return res.status(500).json({ message: "Server error", error });
-    }
-});
-exports.getAllMaterialIssuances = getAllMaterialIssuances;
-//pay workers
-const createPayment = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const { workerId, amountPerDay, startDate, endDate, description } = req.body;
-        // Find the worker by ID
-        const worker = yield User_1.default.findById(workerId);
-        if (!worker) {
-            return res.status(404).json({ message: "Worker not found" });
-        }
-        // Find attendance records within the date range
-        const attendanceRecords = yield Attendance_1.default.find({
-            workerId,
-            date: {
-                $gte: new Date(startDate),
-                $lte: new Date(endDate),
-            },
-            status: "Present",
-        });
-        // Calculate the total payment based on the number of days present
-        const totalDaysPresent = attendanceRecords.length;
-        const totalPayment = totalDaysPresent * amountPerDay;
-        // Create and save the payment
-        const payment = new Payment_1.default({
-            workerId,
-            amount: totalPayment,
-            description,
-            date: new Date(),
-        });
-        const createdPayment = yield payment.save();
-        return res.status(201).json(createdPayment);
-    }
-    catch (error) {
-        return res
-            .status(500)
-            .json({ message: "Server Error", error: error.message });
-    }
-});
-exports.createPayment = createPayment;
-// Record remaining materials
-const recordRemainingMaterials = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const { materialId, quantity } = req.body;
-        // Find the material
-        const material = yield Material_1.default.findById(materialId);
-        if (!material) {
-            return res.status(404).json({ message: "Material not found" });
-        }
-        // Create a record of remaining materials
-        const remainingMaterial = new RemainingMaterials_1.default({
-            materialId,
-            quantity,
-            date: new Date(),
-        });
-        const createdRemainingMaterial = yield remainingMaterial.save();
-        return res.status(201).json(createdRemainingMaterial);
-    }
-    catch (error) {
-        return res.status(500).json({ message: "Server error", error });
-    }
-});
-exports.recordRemainingMaterials = recordRemainingMaterials;
-// Get all remaining materials
-const getRemainingMaterials = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const remainingMaterials = yield RemainingMaterials_1.default.find().populate("materialId", "name");
-        res.json(remainingMaterials);
-    }
-    catch (error) {
-        res.status(500).json({ message: "Server error", error });
-    }
-});
-exports.getRemainingMaterials = getRemainingMaterials;
-// Mark attendance for a worker
-const markAttendance = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const { workerId, status } = req.body;
-        const { date } = req.params; // Assuming date is passed in params
-        const existingAttendance = yield Attendance_1.default.findOne({ workerId, date });
-        if (existingAttendance) {
-            existingAttendance.status = status;
-            const updatedAttendance = yield existingAttendance.save();
-            return res.json(updatedAttendance);
-        }
-        else {
-            const newAttendance = new Attendance_1.default({
-                workerId,
-                date,
-                status,
-            });
-            const createdAttendance = yield newAttendance.save();
-            return res.status(201).json(createdAttendance);
-        }
-    }
-    catch (error) {
-        return res
-            .status(500)
-            .json({ message: "Server Error", error: error.message });
-    }
-});
-exports.markAttendance = markAttendance;
-// Update worker details
+// Update worker by ID
 const updateWorker = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
+        const { tenantId } = req.user;
         const { workerId } = req.params;
-        const updates = req.body;
-        const worker = yield User_1.default.findByIdAndUpdate(workerId, updates, {
-            new: true,
-        });
+        const worker = yield User_1.default.findOneAndUpdate({ _id: workerId, tenantId }, req.body, { new: true });
         if (!worker) {
             return res.status(404).json({ message: "Worker not found" });
         }
@@ -417,25 +264,33 @@ const updateWorker = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     }
 });
 exports.updateWorker = updateWorker;
-// Delete a worker
+// Delete a worker by ID with tenant-based access
 const deleteWorker = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const { workerId } = req.params;
+    const tenantId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.tenantId;
     try {
-        const { workerId } = req.params;
-        const worker = yield User_1.default.findByIdAndDelete(workerId);
+        const worker = yield User_1.default.findOne({ _id: workerId, tenantId });
         if (!worker) {
-            return res.status(404).json({ message: "Worker not found" });
+            return res
+                .status(404)
+                .json({ message: "Worker not found or not authorized" });
         }
-        res.json({ message: "Worker deleted successfully" });
+        yield User_1.default.findByIdAndDelete(workerId);
+        res.status(200).json({ message: "Worker deleted successfully" });
     }
     catch (error) {
-        res.status(500).json({ message: "Error deleting worker", error });
+        res
+            .status(500)
+            .json({ message: "Error deleting worker", error: error.message });
     }
 });
 exports.deleteWorker = deleteWorker;
-// Get all workers
+// Get all workers for the tenant
 const getAllWorkers = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const workers = yield User_1.default.find({ role: "worker" });
+        const { tenantId } = req.user;
+        const workers = yield User_1.default.find({ role: "worker", tenantId });
         res.json(workers);
     }
     catch (error) {
@@ -443,22 +298,3 @@ const getAllWorkers = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
 });
 exports.getAllWorkers = getAllWorkers;
-// Get attendance for a specific worker
-const getWorkerAttendance = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const { workerId } = req.params;
-        const { startDate, endDate } = req.query; // assuming dates are passed as query params
-        const attendance = yield Attendance_1.default.find({
-            workerId,
-            date: {
-                $gte: new Date(startDate),
-                $lte: new Date(endDate),
-            },
-        });
-        res.json(attendance);
-    }
-    catch (error) {
-        res.status(500).json({ message: "Error fetching attendance", error });
-    }
-});
-exports.getWorkerAttendance = getWorkerAttendance;

@@ -38,6 +38,11 @@ const toolSchema = new mongoose_1.Schema({
         required: true,
         default: 0,
     },
+    tenantId: {
+        type: mongoose_1.default.Schema.Types.ObjectId,
+        ref: "Tenant",
+        required: true,
+    },
 }, {
     timestamps: true,
 });

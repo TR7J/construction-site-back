@@ -47,5 +47,10 @@ const LabourSchema = new mongoose_1.Schema({
     totalFundisPay: { type: Number, required: true },
     totalHelpersPay: { type: Number, required: true },
     totalPay: { type: Number, required: true },
+    tenantId: {
+        type: mongoose_1.default.Schema.Types.ObjectId,
+        ref: "Tenant",
+        required: true,
+    },
 });
 exports.default = mongoose_1.default.model("Labour", LabourSchema);

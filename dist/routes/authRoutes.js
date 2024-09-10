@@ -9,5 +9,6 @@ const adminMiddleware_1 = require("../middleware/adminMiddleware");
 const authMiddleware_1 = require("../middleware/authMiddleware");
 const router = express_1.default.Router();
 router.post("/register", authMiddleware_1.AuthMiddleware, adminMiddleware_1.AdminMiddleware, authController_1.signupUser);
+router.post("/createSupervisor", authMiddleware_1.AuthMiddleware, adminMiddleware_1.AdminMiddleware, authController_1.createSupervisor);
 router.post("/login", authController_1.signinUser);
 exports.default = router;
