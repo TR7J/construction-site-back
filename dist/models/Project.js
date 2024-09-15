@@ -23,39 +23,18 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+// models/Project.ts
 const mongoose_1 = __importStar(require("mongoose"));
-const LabourSchema = new mongoose_1.Schema({
-    date: { type: String, required: true },
-    milestone: { type: String, required: true },
-    labourType: { type: String, required: true },
-    mainSupervisor: {
-        name: { type: String, required: true },
-        pay: { type: Number, required: true },
-    },
-    fundis: [
-        {
-            name: { type: String, required: true },
-            pay: { type: Number, required: true },
-        },
-    ],
-    helpers: [
-        {
-            name: { type: String, required: true },
-            pay: { type: Number, required: true },
-        },
-    ],
-    totalFundisPay: { type: Number, required: true },
-    totalHelpersPay: { type: Number, required: true },
-    totalPay: { type: Number, required: true },
+const projectSchema = new mongoose_1.Schema({
+    name: { type: String, required: true },
+    description: { type: String, required: true },
+    startDate: { type: Date, required: true },
+    endDate: { type: Date, required: true },
     tenantId: {
         type: mongoose_1.default.Schema.Types.ObjectId,
         ref: "Tenant",
         required: true,
     },
-    projectId: {
-        type: mongoose_1.default.Schema.Types.ObjectId,
-        ref: "Project",
-        required: true,
-    },
-});
-exports.default = mongoose_1.default.model("Labour", LabourSchema);
+}, { timestamps: true });
+const Project = mongoose_1.default.model("Project", projectSchema);
+exports.default = Project;

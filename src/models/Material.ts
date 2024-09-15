@@ -17,6 +17,7 @@ export interface IMaterial extends Document {
     milestone: string; // Added milestone to history
   }>;
   tenantId: mongoose.Schema.Types.ObjectId;
+  projectId: mongoose.Schema.Types.ObjectId;
 }
 
 const materialSchema: Schema<IMaterial> = new Schema(
@@ -24,7 +25,6 @@ const materialSchema: Schema<IMaterial> = new Schema(
     name: {
       type: String,
       required: true,
-      unique: true,
     },
     quantity: {
       type: Number,
@@ -65,6 +65,11 @@ const materialSchema: Schema<IMaterial> = new Schema(
     tenantId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Tenant",
+      required: true,
+    },
+    projectId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Project",
       required: true,
     },
   },

@@ -11,6 +11,7 @@ const mongoose_1 = __importDefault(require("mongoose"));
 const authRoutes_1 = __importDefault(require("./routes/authRoutes"));
 const adminRoutes_1 = __importDefault(require("./routes/adminRoutes"));
 const supervisorRoutes_1 = __importDefault(require("./routes/supervisorRoutes"));
+const projectRoutes_1 = __importDefault(require("./routes/projectRoutes"));
 // fetching env variables
 dotenv_1.default.config();
 // initialise our app
@@ -27,8 +28,8 @@ mongoose_1.default
 // cors middleware
 app.use((0, cors_1.default)({
     credentials: true,
-    origin: "https://construction-site-frontend.onrender.com",
-    // http://localhost:3000
+    origin: "http://localhost:3000",
+    // "https://construction-site-frontend.onrender.com"
 }));
 // middleware for parsing json data
 app.use(express_1.default.json());
@@ -36,6 +37,7 @@ app.use(express_1.default.json());
 app.use("/api/auth", authRoutes_1.default);
 app.use("/api/admin", adminRoutes_1.default);
 app.use("/api/supervisor", supervisorRoutes_1.default);
+app.use("/api/projects", projectRoutes_1.default);
 // listening ...
 const PORT = 8000;
 app.listen(PORT, () => {

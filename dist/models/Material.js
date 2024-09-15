@@ -28,7 +28,6 @@ const materialSchema = new mongoose_1.Schema({
     name: {
         type: String,
         required: true,
-        unique: true,
     },
     quantity: {
         type: Number,
@@ -69,6 +68,11 @@ const materialSchema = new mongoose_1.Schema({
     tenantId: {
         type: mongoose_1.default.Schema.Types.ObjectId,
         ref: "Tenant",
+        required: true,
+    },
+    projectId: {
+        type: mongoose_1.default.Schema.Types.ObjectId,
+        ref: "Project",
         required: true,
     },
 }, {

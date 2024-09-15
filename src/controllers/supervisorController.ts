@@ -6,13 +6,14 @@ import Labour from "../models/Labour";
 export const addOrUpdateMaterial = async (req: Request, res: Response) => {
   try {
     const { tenantId } = req.user;
+    const { projectId } = req.params;
     let { name, quantity, unitPrice, unitType, milestone } = req.body;
 
     quantity = Number(quantity);
     unitPrice = Number(unitPrice);
     const totalPrice = quantity * unitPrice;
 
-    let material = await Material.findOne({ name, tenantId });
+    let material = await Material.findOne({ name, tenantId, projectId });
 
     if (material) {
       material.quantity += quantity;
@@ -41,6 +42,7 @@ export const addOrUpdateMaterial = async (req: Request, res: Response) => {
         unitType,
         milestone,
         tenantId, // Associate with the tenant
+        projectId, // Associate with the project
         history: [
           {
             date: new Date(),
@@ -61,11 +63,24 @@ export const addOrUpdateMaterial = async (req: Request, res: Response) => {
   }
 };
 
+// Get all materials for a project
+export const getMaterialsByProject = async (req: Request, res: Response) => {
+  try {
+    const { tenantId } = req.user;
+    const projectId = req.params.projectId;
+    const materials = await Material.find({ tenantId, projectId });
+    res.json(materials);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to retrieve materials", error });
+  }
+};
+
 // Get all materials for the tenant
 export const getMaterials = async (req: Request, res: Response) => {
   try {
     const { tenantId } = req.user;
-    const materials = await Material.find({ tenantId });
+    const projectId = req.params.projectId;
+    const materials = await Material.find({ tenantId, projectId });
     res.json(materials);
   } catch (error) {
     res.status(500).json({ message: "Failed to retrieve materials", error });
@@ -139,10 +154,12 @@ export const addLabour = async (req: Request, res: Response) => {
     if (!req.body.date || !req.body.milestone || !req.body.labourType) {
       return res.status(400).json({ message: "Missing required fields" });
     }
+    const { projectId } = req.params;
     const { tenantId } = req.user;
     const newLabour = new Labour({
       ...req.body,
       tenantId, // Associate with the tenant
+      projectId, // Associate with the project
     });
     await newLabour.save();
     res
@@ -159,7 +176,8 @@ export const addLabour = async (req: Request, res: Response) => {
 export const getLabours = async (req: Request, res: Response) => {
   try {
     const { tenantId } = req.user;
-    const labours = await Labour.find({ tenantId });
+    const projectId = req.params.projectId;
+    const labours = await Labour.find({ tenantId, projectId });
     res.status(200).json(labours);
   } catch (error: any) {
     res
@@ -232,6 +250,7 @@ export const deleteLabour = async (req: Request, res: Response) => {
 // Add Worker
 export const addWorker = async (req: Request, res: Response) => {
   try {
+    const { projectId } = req.params;
     const { tenantId } = req.user;
     const { name, mobile } = req.body;
 
@@ -240,12 +259,25 @@ export const addWorker = async (req: Request, res: Response) => {
       mobile,
       role: "worker",
       tenantId, // Associate with the tenant
+      projectId, // Associate with the project
     });
 
     const createdWorker = await worker.save();
     res.status(201).json(createdWorker);
   } catch (error) {
     res.status(500).json({ message: "Error adding worker", error });
+  }
+};
+
+// Get all workers for a project
+export const getWorkersByProject = async (req: Request, res: Response) => {
+  try {
+    const { tenantId } = req.user;
+    const projectId = req.params.projectId;
+    const workers = await User.find({ role: "worker", tenantId, projectId });
+    res.json(workers);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching workers", error });
   }
 };
 
@@ -297,7 +329,8 @@ export const deleteWorker = async (req: Request, res: Response) => {
 export const getAllWorkers = async (req: Request, res: Response) => {
   try {
     const { tenantId } = req.user;
-    const workers = await User.find({ role: "worker", tenantId });
+    const projectId = req.params.projectId;
+    const workers = await User.find({ role: "worker", tenantId, projectId });
     res.json(workers);
   } catch (error) {
     res.status(500).json({ message: "Error fetching workers", error });

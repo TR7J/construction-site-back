@@ -6,6 +6,7 @@ import mongoose from "mongoose";
 import authRoutes from "./routes/authRoutes";
 import adminRoutes from "./routes/adminRoutes";
 import supervisorRoutes from "./routes/supervisorRoutes";
+import projectRoutes from "./routes/projectRoutes";
 
 // fetching env variables
 dotenv.config();
@@ -27,8 +28,8 @@ mongoose
 app.use(
   cors({
     credentials: true,
-    origin: "https://construction-site-frontend.onrender.com",
-    // http://localhost:3000
+    origin: "http://localhost:3000",
+    // "https://construction-site-frontend.onrender.com"
   })
 );
 
@@ -39,6 +40,7 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/supervisor", supervisorRoutes);
+app.use("/api/projects", projectRoutes);
 
 // listening ...
 const PORT = 8000;
