@@ -24,52 +24,36 @@ const addOrUpdateMaterial = (req, res) => __awaiter(void 0, void 0, void 0, func
         quantity = Number(quantity);
         unitPrice = Number(unitPrice);
         const totalPrice = quantity * unitPrice;
-        let material = yield Material_1.default.findOne({ name, tenantId, projectId });
-        if (material) {
-            material.quantity += quantity;
-            material.unitPrice = unitPrice;
-            material.totalPrice = material.quantity * material.unitPrice;
-            material.unitType = unitType;
-            material.history.push({
-                date: new Date(),
-                name: material.name,
-                quantity,
-                unitPrice,
-                totalPrice,
-                unitType: material.unitType,
-                milestone,
-            });
-            const updatedMaterial = yield material.save();
-            res.json(updatedMaterial);
-        }
-        else {
-            const newMaterial = new Material_1.default({
-                name,
-                quantity,
-                unitPrice,
-                totalPrice,
-                unitType,
-                milestone,
-                tenantId, // Associate with the tenant
-                projectId, // Associate with the project
-                history: [
-                    {
-                        date: new Date(),
-                        name,
-                        quantity,
-                        unitPrice,
-                        totalPrice,
-                        unitType,
-                        milestone,
-                    },
-                ],
-            });
-            const createdMaterial = yield newMaterial.save();
-            res.status(201).json(createdMaterial);
-        }
+        // Create a new material entry every time, regardless of existing materials
+        const newMaterial = new Material_1.default({
+            name,
+            quantity,
+            unitPrice,
+            totalPrice,
+            unitType,
+            milestone,
+            tenantId, // Associate with the tenant
+            projectId, // Associate with the project
+            history: [
+                {
+                    date: new Date(),
+                    name,
+                    quantity,
+                    unitPrice,
+                    totalPrice,
+                    unitType,
+                    milestone,
+                },
+            ],
+        });
+        const createdMaterial = yield newMaterial.save();
+        return res.status(201).json(createdMaterial);
     }
     catch (error) {
-        res.status(500).json({ message: "Error processing material", error });
+        console.error(error); // Log the error for debugging
+        return res
+            .status(500)
+            .json({ message: "Error processing material", error });
     }
 });
 exports.addOrUpdateMaterial = addOrUpdateMaterial;

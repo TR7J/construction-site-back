@@ -6,7 +6,8 @@ export interface IMaterial extends Document {
   unitPrice: number;
   totalPrice: number;
   unitType: string;
-  milestone: string; // Added milestone
+  milestone: string;
+  date: Date; // Added date for the material itself
   history: Array<{
     date: Date;
     name: string;
@@ -14,7 +15,7 @@ export interface IMaterial extends Document {
     unitPrice: number;
     totalPrice: number;
     unitType: string;
-    milestone: string; // Added milestone to history
+    milestone: string;
   }>;
   tenantId: mongoose.Schema.Types.ObjectId;
   projectId: mongoose.Schema.Types.ObjectId;
@@ -48,6 +49,11 @@ const materialSchema: Schema<IMaterial> = new Schema(
       type: String,
       required: true,
     },
+    date: {
+      type: Date,
+      default: Date.now, // Date for when the material entry was created
+      required: true,
+    },
     history: [
       {
         date: {
@@ -59,7 +65,7 @@ const materialSchema: Schema<IMaterial> = new Schema(
         unitPrice: Number,
         totalPrice: Number,
         unitType: String,
-        milestone: String, // Added milestone to history
+        milestone: String,
       },
     ],
     tenantId: {
@@ -74,7 +80,7 @@ const materialSchema: Schema<IMaterial> = new Schema(
     },
   },
   {
-    timestamps: true,
+    timestamps: true, // This will also track createdAt and updatedAt timestamps automatically
   }
 );
 

@@ -51,6 +51,11 @@ const materialSchema = new mongoose_1.Schema({
         type: String,
         required: true,
     },
+    date: {
+        type: Date,
+        default: Date.now, // Date for when the material entry was created
+        required: true,
+    },
     history: [
         {
             date: {
@@ -62,7 +67,7 @@ const materialSchema = new mongoose_1.Schema({
             unitPrice: Number,
             totalPrice: Number,
             unitType: String,
-            milestone: String, // Added milestone to history
+            milestone: String,
         },
     ],
     tenantId: {
@@ -76,7 +81,7 @@ const materialSchema = new mongoose_1.Schema({
         required: true,
     },
 }, {
-    timestamps: true,
+    timestamps: true, // This will also track createdAt and updatedAt timestamps automatically
 });
 const Material = mongoose_1.default.model("Material", materialSchema);
 exports.default = Material;

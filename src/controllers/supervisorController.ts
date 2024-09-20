@@ -13,53 +13,36 @@ export const addOrUpdateMaterial = async (req: Request, res: Response) => {
     unitPrice = Number(unitPrice);
     const totalPrice = quantity * unitPrice;
 
-    let material = await Material.findOne({ name, tenantId, projectId });
+    // Create a new material entry every time, regardless of existing materials
+    const newMaterial = new Material({
+      name,
+      quantity,
+      unitPrice,
+      totalPrice,
+      unitType,
+      milestone,
+      tenantId, // Associate with the tenant
+      projectId, // Associate with the project
+      history: [
+        {
+          date: new Date(),
+          name,
+          quantity,
+          unitPrice,
+          totalPrice,
+          unitType,
+          milestone,
+        },
+      ],
+    });
 
-    if (material) {
-      material.quantity += quantity;
-      material.unitPrice = unitPrice;
-      material.totalPrice = material.quantity * material.unitPrice;
-      material.unitType = unitType;
-
-      material.history.push({
-        date: new Date(),
-        name: material.name,
-        quantity,
-        unitPrice,
-        totalPrice,
-        unitType: material.unitType,
-        milestone,
-      });
-
-      const updatedMaterial = await material.save();
-      res.json(updatedMaterial);
-    } else {
-      const newMaterial = new Material({
-        name,
-        quantity,
-        unitPrice,
-        totalPrice,
-        unitType,
-        milestone,
-        tenantId, // Associate with the tenant
-        projectId, // Associate with the project
-        history: [
-          {
-            date: new Date(),
-            name,
-            quantity,
-            unitPrice,
-            totalPrice,
-            unitType,
-            milestone,
-          },
-        ],
-      });
-      const createdMaterial = await newMaterial.save();
-      res.status(201).json(createdMaterial);
-    }
+    const createdMaterial = await newMaterial.save();
+    return res.status(201).json(createdMaterial);
   } catch (error) {
-    res.status(500).json({ message: "Error processing material", error });
+    console.error(error); // Log the error for debugging
+    return res
+      .status(500)
+      .json({ message: "Error processing material", error });
   }
 };
 
