@@ -45,7 +45,7 @@ const materialSchema = new mongoose_1.Schema({
     unitType: {
         type: String,
         required: true,
-        enum: ["Pieces", "Lorries", "Bags", "Feet"],
+        enum: ["Pieces", "Lorries", "Bags", "Feet", "Wheelbarrows", "Litters"],
     },
     milestone: {
         type: String,
