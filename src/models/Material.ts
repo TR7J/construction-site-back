@@ -43,7 +43,16 @@ const materialSchema: Schema<IMaterial> = new Schema(
     unitType: {
       type: String,
       required: true,
-      enum: ["Pieces", "Lorries", "Bags", "Feet", "Wheelbarrows", "Litters"],
+      enum: [
+        "Pieces",
+        "Lorries",
+        "Bags",
+        "Feet",
+        "KGs",
+        "Tonnes",
+        "Wheelbarrows",
+        "Litters",
+      ],
     },
     milestone: {
       type: String,
