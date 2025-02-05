@@ -7,9 +7,9 @@ export interface IMaterial extends Document {
   totalPrice: number;
   unitType: string;
   milestone: string;
-  date: Date; // Added date for the material itself
+  date: string; // Added date for the material itself
   history: Array<{
-    date: Date;
+    date: string;
     name: string;
     quantity: number;
     unitPrice: number;
@@ -59,15 +59,13 @@ const materialSchema: Schema<IMaterial> = new Schema(
       required: true,
     },
     date: {
-      type: Date,
-      default: Date.now, // Date for when the material entry was created
+      type: String,
       required: true,
     },
     history: [
       {
         date: {
-          type: Date,
-          default: Date.now,
+          type: String,
         },
         name: String,
         quantity: Number,

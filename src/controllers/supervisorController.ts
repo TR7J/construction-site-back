@@ -7,8 +7,7 @@ export const addOrUpdateMaterial = async (req: Request, res: Response) => {
   try {
     const { tenantId } = req.user;
     const { projectId } = req.params;
-    let { name, quantity, unitPrice, unitType, milestone, dateAdded } =
-      req.body;
+    let { name, quantity, unitPrice, unitType, milestone, date } = req.body;
 
     quantity = Number(quantity);
     unitPrice = Number(unitPrice);
@@ -24,10 +23,10 @@ export const addOrUpdateMaterial = async (req: Request, res: Response) => {
       milestone,
       tenantId, // Associate with the tenant
       projectId, // Associate with the project
-      dateAdded: new Date(dateAdded),
+      date,
       history: [
         {
-          date: new Date(),
+          date,
           name,
           quantity,
           unitPrice,

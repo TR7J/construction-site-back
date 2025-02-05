@@ -61,15 +61,13 @@ const materialSchema = new mongoose_1.Schema({
         required: true,
     },
     date: {
-        type: Date,
-        default: Date.now, // Date for when the material entry was created
+        type: String,
         required: true,
     },
     history: [
         {
             date: {
-                type: Date,
-                default: Date.now,
+                type: String,
             },
             name: String,
             quantity: Number,

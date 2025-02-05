@@ -30,7 +30,7 @@ const addOrUpdateMaterial = (req, res) => __awaiter(void 0, void 0, void 0, func
             material.totalPrice = material.quantity * material.unitPrice;
             material.unitType = unitType;
             material.history.push({
-                date: new Date(),
+                date: material.date,
                 name: material.name,
                 quantity,
                 unitPrice,

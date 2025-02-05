@@ -21,7 +21,7 @@ export const addOrUpdateMaterial = async (req: Request, res: Response) => {
       material.unitType = unitType;
 
       material.history.push({
-        date: new Date(),
+        date: material.date,
         name: material.name,
         quantity,
         unitPrice,
