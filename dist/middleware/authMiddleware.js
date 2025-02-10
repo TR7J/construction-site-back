@@ -10,6 +10,7 @@ const AuthMiddleware = (req, res, next) => {
     if (authorization) {
         const token = authorization.slice(7, authorization.length); // Bearer xxxxx
         const decode = jsonwebtoken_1.default.verify(token, process.env.TOKENSECRET);
+        console.log("Decoded JWT:", decode);
         req.user = decode;
         next();
     }

@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import Material from "../models/Material";
 import User from "../models/User";
 import Labour from "../models/Labour";
+import mongoose from "mongoose";
 
 export const addOrUpdateMaterial = async (req: Request, res: Response) => {
   try {
@@ -21,8 +22,8 @@ export const addOrUpdateMaterial = async (req: Request, res: Response) => {
       totalPrice,
       unitType,
       milestone,
-      tenantId, // Associate with the tenant
-      projectId, // Associate with the project
+      tenantId: new mongoose.Types.ObjectId(tenantId),
+      projectId: new mongoose.Types.ObjectId(projectId),
       date,
       history: [
         {
@@ -62,9 +63,32 @@ export const getMaterialsByProject = async (req: Request, res: Response) => {
 // Get all materials for the tenant
 export const getMaterials = async (req: Request, res: Response) => {
   try {
+    console.log("Tenant ID from user object:", req.user?.tenantId);
+    console.log("Project ID from params:", req.params.projectId);
     const { tenantId } = req.user;
     const projectId = req.params.projectId;
-    const materials = await Material.find({ tenantId, projectId });
+
+    console.log("Fetching materials for:", { tenantId, projectId });
+
+    // 🔥 Convert IDs to ObjectId if they are strings
+    const tenantObjectId = new mongoose.Types.ObjectId(tenantId);
+    const projectObjectId = new mongoose.Types.ObjectId(projectId);
+
+    // Debugging: Check the type of these variables
+    console.log("Type of tenantId:", typeof tenantObjectId);
+    console.log("Type of projectId:", typeof projectObjectId);
+
+    console.log("Fetching materials for:", { tenantObjectId, projectObjectId });
+
+    const materials = await Material.find({
+      tenantId: tenantObjectId,
+      projectId: projectObjectId,
+    }).lean();
+
+    console.log("Fetched Materials:", materials);
+
+    // console.log(await Material.find());
+
     res.json(materials);
   } catch (error) {
     res.status(500).json({ message: "Failed to retrieve materials", error });
@@ -142,8 +166,8 @@ export const addLabour = async (req: Request, res: Response) => {
     const { tenantId } = req.user;
     const newLabour = new Labour({
       ...req.body,
-      tenantId, // Associate with the tenant
-      projectId, // Associate with the project
+      tenantId: new mongoose.Types.ObjectId(tenantId),
+      projectId: new mongoose.Types.ObjectId(projectId),
     });
     await newLabour.save();
     res
@@ -156,14 +180,23 @@ export const addLabour = async (req: Request, res: Response) => {
   }
 };
 
-// Get all labours for the tenant
 export const getLabours = async (req: Request, res: Response) => {
   try {
-    const { tenantId } = req.user;
-    const projectId = req.params.projectId;
+    console.log("Tenant ID from user object:", req.user?.tenantId);
+    console.log("Project ID from params:", req.params.projectId);
+
+    const tenantId = new mongoose.Types.ObjectId(req.user.tenantId);
+    const projectId = new mongoose.Types.ObjectId(req.params.projectId);
+
+    console.log("Fetching labours for:", { tenantId, projectId });
+
     const labours = await Labour.find({ tenantId, projectId });
+
+    console.log("Fetched Labours:", labours);
+
     res.status(200).json(labours);
   } catch (error: any) {
+    console.error("Error fetching labours:", error);
     res
       .status(500)
       .json({ message: "Failed to fetch labours", error: error.message });

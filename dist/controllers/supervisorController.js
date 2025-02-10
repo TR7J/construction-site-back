@@ -16,6 +16,7 @@ exports.getAllWorkers = exports.deleteWorker = exports.updateWorker = exports.ge
 const Material_1 = __importDefault(require("../models/Material"));
 const User_1 = __importDefault(require("../models/User"));
 const Labour_1 = __importDefault(require("../models/Labour"));
+const mongoose_1 = __importDefault(require("mongoose"));
 const addOrUpdateMaterial = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { tenantId } = req.user;
@@ -32,8 +33,8 @@ const addOrUpdateMaterial = (req, res) => __awaiter(void 0, void 0, void 0, func
             totalPrice,
             unitType,
             milestone,
-            tenantId, // Associate with the tenant
-            projectId, // Associate with the project
+            tenantId: new mongoose_1.default.Types.ObjectId(tenantId),
+            projectId: new mongoose_1.default.Types.ObjectId(projectId),
             date,
             history: [
                 {
@@ -73,10 +74,26 @@ const getMaterialsByProject = (req, res) => __awaiter(void 0, void 0, void 0, fu
 exports.getMaterialsByProject = getMaterialsByProject;
 // Get all materials for the tenant
 const getMaterials = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     try {
+        console.log("Tenant ID from user object:", (_a = req.user) === null || _a === void 0 ? void 0 : _a.tenantId);
+        console.log("Project ID from params:", req.params.projectId);
         const { tenantId } = req.user;
         const projectId = req.params.projectId;
-        const materials = yield Material_1.default.find({ tenantId, projectId });
+        console.log("Fetching materials for:", { tenantId, projectId });
+        // 🔥 Convert IDs to ObjectId if they are strings
+        const tenantObjectId = new mongoose_1.default.Types.ObjectId(tenantId);
+        const projectObjectId = new mongoose_1.default.Types.ObjectId(projectId);
+        // Debugging: Check the type of these variables
+        console.log("Type of tenantId:", typeof tenantObjectId);
+        console.log("Type of projectId:", typeof projectObjectId);
+        console.log("Fetching materials for:", { tenantObjectId, projectObjectId });
+        const materials = yield Material_1.default.find({
+            tenantId: tenantObjectId,
+            projectId: projectObjectId,
+        }).lean();
+        console.log("Fetched Materials:", materials);
+        // console.log(await Material.find());
         res.json(materials);
     }
     catch (error) {
@@ -148,8 +165,7 @@ const addLabour = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         }
         const { projectId } = req.params;
         const { tenantId } = req.user;
-        const newLabour = new Labour_1.default(Object.assign(Object.assign({}, req.body), { tenantId, // Associate with the tenant
-            projectId }));
+        const newLabour = new Labour_1.default(Object.assign(Object.assign({}, req.body), { tenantId: new mongoose_1.default.Types.ObjectId(tenantId), projectId: new mongoose_1.default.Types.ObjectId(projectId) }));
         yield newLabour.save();
         res
             .status(201)
@@ -162,15 +178,20 @@ const addLabour = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.addLabour = addLabour;
-// Get all labours for the tenant
 const getLabours = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     try {
-        const { tenantId } = req.user;
-        const projectId = req.params.projectId;
+        console.log("Tenant ID from user object:", (_a = req.user) === null || _a === void 0 ? void 0 : _a.tenantId);
+        console.log("Project ID from params:", req.params.projectId);
+        const tenantId = new mongoose_1.default.Types.ObjectId(req.user.tenantId);
+        const projectId = new mongoose_1.default.Types.ObjectId(req.params.projectId);
+        console.log("Fetching labours for:", { tenantId, projectId });
         const labours = yield Labour_1.default.find({ tenantId, projectId });
+        console.log("Fetched Labours:", labours);
         res.status(200).json(labours);
     }
     catch (error) {
+        console.error("Error fetching labours:", error);
         res
             .status(500)
             .json({ message: "Failed to fetch labours", error: error.message });

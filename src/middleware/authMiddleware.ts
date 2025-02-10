@@ -10,6 +10,7 @@ export const AuthMiddleware = (
   if (authorization) {
     const token = authorization.slice(7, authorization.length); // Bearer xxxxx
     const decode = jwt.verify(token, process.env.TOKENSECRET as string);
+    console.log("Decoded JWT:", decode);
     req.user = decode as {
       _id: string;
       name: string;
