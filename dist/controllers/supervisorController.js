@@ -187,7 +187,6 @@ const getLabours = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         const projectId = new mongoose_1.default.Types.ObjectId(req.params.projectId);
         console.log("Fetching labours for:", { tenantId, projectId });
         const labours = yield Labour_1.default.find({ tenantId, projectId });
-        console.log("Fetched Labours:", labours);
         res.status(200).json(labours);
     }
     catch (error) {
@@ -221,6 +220,7 @@ exports.getLabourById = getLabourById;
 const updateLabourById = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { tenantId } = req.user;
+        console.log("The tenant id:", tenantId);
         const labour = yield Labour_1.default.findOneAndUpdate({ _id: req.params.id, tenantId }, req.body, { new: true, runValidators: true });
         if (!labour) {
             return res.status(404).json({ message: "Labour not found" });

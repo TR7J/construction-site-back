@@ -192,8 +192,6 @@ export const getLabours = async (req: Request, res: Response) => {
 
     const labours = await Labour.find({ tenantId, projectId });
 
-    console.log("Fetched Labours:", labours);
-
     res.status(200).json(labours);
   } catch (error: any) {
     console.error("Error fetching labours:", error);
@@ -227,6 +225,7 @@ export const getLabourById = async (req: Request, res: Response) => {
 export const updateLabourById = async (req: Request, res: Response) => {
   try {
     const { tenantId } = req.user;
+    console.log("The tenant id:", tenantId);
     const labour = await Labour.findOneAndUpdate(
       { _id: req.params.id, tenantId },
       req.body,
