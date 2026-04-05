@@ -28,8 +28,8 @@ mongoose
 app.use(
   cors({
     credentials: true,
-    origin: "https://construction-site-frontend.onrender.com",
-    // "http://localhost:3000"
+    origin: "http://localhost:3000",
+    // "https://construction-site-frontend.onrender.com"
   })
 );
 
