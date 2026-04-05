@@ -28,9 +28,9 @@ mongoose
 app.use(
   cors({
     credentials: true,
-    origin: "http://localhost:3000",
-    // "https://construction-site-frontend.onrender.com"
-  })
+    origin: "https://construction-site-frontend.onrender.com",
+    // "http://localhost:3000"
+  }),
 );
 
 // middleware for parsing json data
