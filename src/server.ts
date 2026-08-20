@@ -20,8 +20,8 @@ mongoose
   .then(() => {
     console.log("Connected to database.");
   })
-  .catch(() => {
-    console.log("Error while connecting to database.");
+  .catch((error) => {
+    console.error("Error while connecting to database:", error);
   });
 
 // cors middleware
