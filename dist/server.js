@@ -29,7 +29,7 @@ mongoose_1.default
 app.use((0, cors_1.default)({
     credentials: true,
     origin: "http://localhost:3000",
-    // "https://construction-site-frontend.onrender.com"
+    //  "https://construction-site-frontend.onrender.com"
 }));
 // middleware for parsing json data
 app.use(express_1.default.json());

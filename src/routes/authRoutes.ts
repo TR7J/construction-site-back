@@ -14,7 +14,7 @@ router.post(
   "/createSupervisor",
   AuthMiddleware,
   AdminMiddleware,
-  createSupervisor
+  createSupervisor,
 );
 router.post("/login", signinUser);
 
